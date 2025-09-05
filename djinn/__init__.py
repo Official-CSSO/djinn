@@ -1,32 +1,20 @@
 
 
 import discord
-from discord import app_commands
 from discord.ext import tasks, commands
-from .constants import GUILD
 from loguru import logger
 
+from djinn.constants import GUILD
+
 from .cog_loader import load_cogs
-
-class Djinn(discord.Client):
-
-    def __init__(self, *, intents: discord.Intents):
-        super().__init__(intents=intents)
-        self.tree = app_commands.CommandTree(self)
-
-
-    async def setup_hook(self) -> None:
-        logger.success("Slash commands hook succesfully installed")
-        self.tree.copy_global_to(guild=GUILD)
-        await self.tree.sync(guild=GUILD)
-    
+from .bot import Djinn
 
 intents = discord.Intents.default()
 intents.presences = True
 intents.messages = True
 intents.members = True
 
-djinn = commands.Bot(intents=intents, command_prefix="ff ")
+djinn = Djinn(intents=intents, command_prefix="!")
 
 
 @tasks.loop(minutes=5)
@@ -50,11 +38,16 @@ async def update_member_count_status():
     )
 @djinn.event
 async def on_ready():
-    logger.info(f"Logged in as : {djinn.user} (ID: {djinn.user.id})")
+    logger.info(f"Logged in as : {djinn.user}")
     
-    await load_cogs(djinn, "djinn/cogs")
+    try:
+        dbs = await djinn.db.motor.list_database_names()
+        logger.success(f"Connected! Databases: {dbs}")
+    except Exception as e:
+        logger.error(f"Connection failed: {e}")
 
-    await djinn.tree.sync()
+    await load_cogs(djinn, "djinn/cogs")
+    await djinn.tree.sync(guild=GUILD)
     
     update_member_count_status.start()
    
