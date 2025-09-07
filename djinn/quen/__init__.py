@@ -24,7 +24,10 @@ class Quen:
     async def get_user(self, id: int) -> Optional[User]:
         u = await self.user.find_one({"_id": id})
         if not u:
-            return None
+            # create if none
+            x = User(_id=id, bal=0, bank=0)
+            await self.user.insert_one(x.model_dump())
+            return x
         
         return User(**u)
 
