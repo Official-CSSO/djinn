@@ -8,3 +8,5 @@ GUILD = discord.Object(id=1409368851589763195)
 MONGO_DB = os.getenv("MONGODB")
 
 MOTOR = AsyncIOMotorClient(MONGO_DB) 
+
+TRIVIA_URL = "https://opentdb.com/api.php"
